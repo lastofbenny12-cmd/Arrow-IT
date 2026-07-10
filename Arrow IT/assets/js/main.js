@@ -99,19 +99,31 @@
   const cEnter = document.getElementById("consentEnter");
   const CONSENT_KEY = "arrow_consent";
 
+  // If user has not accepted yet, we show the overlay.
+  // IMPORTANT: do NOT hard-block the whole page (login/signup pages must remain usable).
   if (localStorage.getItem(CONSENT_KEY)) {
     consent.classList.add("hide");
   } else {
-    document.body.classList.add("locked");
     const sync = () => { cEnter.disabled = !(cImp.checked && cAgb.checked); };
-    cImp.addEventListener("change", sync);
-    cAgb.addEventListener("change", sync);
-    cEnter.addEventListener("click", () => {
+
+    // If checkbox elements are missing (e.g. modified pages), don't break JS.
+    if (cImp && cAgb) {
+      cImp.addEventListener("change", sync);
+      cAgb.addEventListener("change", sync);
+      sync();
+    }
+
+    cEnter?.addEventListener("click", () => {
       localStorage.setItem(CONSENT_KEY, String(Date.now()));
       consent.classList.add("hide");
       document.body.classList.remove("locked");
       window.dispatchEvent(new CustomEvent("arrow:consent"));
     });
+
+    // Only lock interaction on pages that actually contain the consent gate content.
+    // Keep login portals usable.
+    const isPortalPage = ["login.html"].includes(path) || document.getElementById("portal") || document.getElementById("emailForm");
+    if (!isPortalPage) document.body.classList.add("locked");
   }
 
   /* ---------- auth-aware nav (set by firebase.js) ---------- */
@@ -271,4 +283,18 @@
   /* ---------- sign-up link on home portal ---------- */
   const toSignup = document.getElementById("toSignup");
   if (toSignup) toSignup.addEventListener("click", () => (location.href = "login.html"));
+
+  /* ---------- Konami easter egg -> Arrow Arcade ---------- */
+  if (path !== "arcade.html") {
+    const KONAMI = [38, 38, 40, 40, 37, 39, 37, 39, 66, 65];
+    let kSeq = [];
+    addEventListener("keydown", (e) => {
+      kSeq.push(e.keyCode);
+      if (kSeq.length > KONAMI.length) kSeq.shift();
+      if (KONAMI.length === kSeq.length && KONAMI.every((k, i) => kSeq[i] === k)) {
+        kSeq = [];
+        location.href = "arcade.html";
+      }
+    }, { passive: true });
+  }
 })();

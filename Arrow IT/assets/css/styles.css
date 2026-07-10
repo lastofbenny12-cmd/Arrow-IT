@@ -676,6 +676,31 @@ body.locked { overflow: hidden; }
 .foot-logo { height: 22px; width: auto; }
 
 /* =========================================================
+   ARROW ARCADE (Pac-Man easter egg)
+   ========================================================= */
+body.arcade { background: #0a0a0f; color: var(--pearl); }
+.arcade-hero .kicker { color: var(--teal); }
+.arcade-title {
+  color: #FFE600; letter-spacing: 3px;
+  text-shadow: 0 0 18px rgba(255,230,0,.55), 3px 3px 0 var(--pink);
+}
+.arcade-sub { color: var(--teal); }
+.arcade-stage { position: relative; z-index: 2; text-align: center; padding: 10px 20px 90px; }
+#pacman {
+  width: 380px; max-width: 92vw; margin: 14px auto 0; border-radius: 10px;
+  box-shadow: 0 0 50px rgba(255,20,147,.25), 0 0 50px rgba(0,217,217,.18);
+  overflow: hidden;
+}
+#shim { position: absolute; visibility: hidden; }
+.arcade-help {
+  display: flex; gap: 18px; justify-content: center; flex-wrap: wrap;
+  margin-top: 18px; font-family: var(--brand); font-weight: 600; letter-spacing: 1px; font-size: 14px;
+}
+.arcade-help b { color: var(--pink); }
+.arcade-credit { margin-top: 14px; font-size: 13px; opacity: .7; }
+.arcade-credit a { color: var(--teal); }
+
+/* =========================================================
    RESPONSIVE
    ========================================================= */
 @media (max-width: 860px) {

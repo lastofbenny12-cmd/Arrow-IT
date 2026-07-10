@@ -73,9 +73,32 @@ document.querySelectorAll(".ptab").forEach((tab) => {
   tab.addEventListener("click", () => showForm(tab.dataset.tab));
 });
 const toSignup = $("toSignup");
-if (toSignup) toSignup.addEventListener("click", (e) => { e.preventDefault(); showForm("signupForm"); });
+if (toSignup) {
+  toSignup.addEventListener("click", (e) => {
+    e.preventDefault();
+    if ($("signupForm")) {
+      showForm("signupForm");
+    } else {
+      location.href = "login.html?signup=true";
+    }
+  });
+}
 const toLogin = $("toLogin");
-if (toLogin) toLogin.addEventListener("click", (e) => { e.preventDefault(); showForm("emailForm"); });
+if (toLogin) {
+  toLogin.addEventListener("click", (e) => {
+    e.preventDefault();
+    if ($("emailForm")) {
+      showForm("emailForm");
+    } else {
+      location.href = "login.html";
+    }
+  });
+}
+
+// Check query param or hash on load to pre-select signup
+if (window.location.search.includes("signup=true") || window.location.hash === "#signup") {
+  showForm("signupForm");
+}
 
 /* ---------- auth-aware nav + contact gate ---------- */
 onAuthStateChanged(auth, (user) => {
@@ -91,6 +114,9 @@ onAuthStateChanged(auth, (user) => {
   }
   const gate = $("gateView");
   const form = $("formView");
+
+  // Only toggle contact gate if this page actually contains the elements.
+  // Otherwise, never hide/show things on login/index pages.
   if (gate && form) {
     if (user) {
       gate.classList.add("hidden");
@@ -102,6 +128,7 @@ onAuthStateChanged(auth, (user) => {
       form.classList.add("hidden");
     }
   }
+
 });
 
 /* ---------- consent -> store per user (if signed in) ---------- */
@@ -123,6 +150,9 @@ if (emailForm) {
     try {
       await signInWithEmailAndPassword(auth, emailForm.email.value.trim(), emailForm.password.value);
       setMsg("welcome back ✦", "var(--teal)");
+      if (!location.pathname.includes("contact.html")) {
+        setTimeout(() => (location.href = "contact.html"), 700);
+      }
     } catch (err) { setMsg(mapError(err), "var(--pink)"); }
   });
 }
@@ -176,6 +206,9 @@ if (phoneForm) {
     try {
       await confirmationResult.confirm(code);
       setMsg("welcome back ✦", "var(--teal)");
+      if (!location.pathname.includes("contact.html")) {
+        setTimeout(() => (location.href = "contact.html"), 700);
+      }
     } catch (err) { setMsg("wrong code ✦", "var(--pink)"); }
   });
 }
