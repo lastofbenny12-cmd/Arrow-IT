@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact — ARROW IT</title>
+  <meta name="description" content="Kontakt zu Arrow IT — nur für verifizierte Menschen. Daten liegen nur auf Firebase." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml" />
+</head>
+<body>
+  <main>
+    <header class="page-hero">
+      <span class="kicker">✦ say hi</span>
+      <h1>CONTACT</h1>
+      <p>Melde dich an, um ein Mensch zu sein ✦</p>
+    </header>
+
+    <!-- GATE: not signed in -->
+    <section class="portal auth-card contact-gate" id="gateView">
+      <div class="portal-glow" aria-hidden="true"></div>
+      <img class="logo-mark portal-logo" src="assets/img/logo.svg" alt="Arrow IT" />
+      <h2 class="portal-title">VERIFY HUMAN</h2>
+      <p class="portal-sub">Login erforderlich</p>
+      <div class="portal-tabs" role="tablist">
+        <button class="ptab active" data-tab="email" role="tab">EMAIL</button>
+        <button class="ptab" data-tab="phone" role="tab">PHONE</button>
+      </div>
+      <form class="portal-form" id="emailForm" autocomplete="off">
+        <label class="field"><input type="email" name="email" placeholder=" " required /><span class="field-label">EMAIL</span></label>
+        <label class="field"><input type="password" name="password" placeholder=" " required /><span class="field-label">PASSWORD</span></label>
+        <button type="submit" class="btn-main full">LOGIN <span class="btn-arrow">➤</span></button>
+      </form>
+      <form class="portal-form hidden" id="phoneForm" autocomplete="off">
+        <label class="field"><input type="tel" name="phone" placeholder=" " required /><span class="field-label">PHONE (+49…)</span></label>
+        <button type="button" class="btn-main full" id="sendCode">SEND CODE <span class="btn-arrow">➤</span></button>
+        <label class="field hidden" id="codeField"><input type="text" name="code" placeholder=" " inputmode="numeric" autocomplete="one-time-code" /><span class="field-label">CODE</span></label>
+        <button type="submit" class="btn-main full hidden" id="verifyCode">VERIFY <span class="btn-arrow">➤</span></button>
+        <div id="recaptcha-container"></div>
+      </form>
+      <p class="portal-msg" id="portalMsg"></p>
+      <div class="auth-switch">noch kein Account? <a href="login.html">sign up ➤</a></div>
+    </section>
+
+    <!-- FORM: signed in -->
+    <section class="portal auth-card hidden" id="formView">
+      <div class="portal-glow" aria-hidden="true"></div>
+      <img class="logo-mark portal-logo" src="assets/img/logo.svg" alt="Arrow IT" />
+      <h2 class="portal-title">CONTACT</h2>
+      <p class="portal-sub">signed in as <span id="contactUser">…</span></p>
+      <form class="portal-form" id="contactForm" autocomplete="off">
+        <label class="field"><input type="text" name="subject" placeholder=" " required /><span class="field-label">SUBJECT</span></label>
+        <label class="field"><textarea name="message" placeholder=" " required rows="4" style="padding-top:18px"></textarea><span class="field-label">MESSAGE</span></label>
+        <button type="submit" class="btn-main full">SEND <span class="btn-arrow">➤</span></button>
+      </form>
+      <p class="portal-msg" id="contactMsg"></p>
+      <p class="privacy-note">🔒 Deine Nachricht wird ausschließlich in Firebase gespeichert. Kein Verkauf und keine Weitergabe an Dritte.</p>
+    </section>
+  </main>
+
+  <script src="assets/js/main.js"></script>
+  <script type="module" src="assets/js/firebase.js"></script>
+</body>
+</html>
+
