@@ -13,11 +13,6 @@ import {
   onAuthStateChanged,
   RecaptchaVerifier,
 } from "https://gstatic.com";
-import {
-  getFirestore,
-  doc,
-  setDoc,
-} from "https://gstatic.com";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAT20uUB6t2Wpkh0zvcBVacx9uM_A1f2w8",
@@ -32,7 +27,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 getAnalytics(app);
 const auth = getAuth(app);
-const db = getFirestore(app);
 
 const $ = (id) => document.getElementById(id);
 const setMsg = (text, color) => {
@@ -66,36 +60,38 @@ function showForm(name) {
   if (s2l) s2l.classList.toggle("hidden", name !== "signupForm");
   setMsg("");
 }
-document.querySelectorAll(".ptab").forEach((tab) => {
-  tab.addEventListener("click", () => showForm(tab.dataset.tab));
-});
-const toSignup = $("toSignup");
-if (toSignup) {
-  toSignup.addEventListener("click", (e) => {
-    e.preventDefault();
-    if ($("signupForm")) {
-      showForm("signupForm");
-    } else {
-      location.href = "login.html?signup=true";
-    }
-  });
-}
-const toLogin = $("toLogin");
-if (toLogin) {
-  toLogin.addEventListener("click", (e) => {
-    e.preventDefault();
-    if ($("emailForm")) {
-      showForm("emailForm");
-    } else {
-      location.href = "login.html";
-    }
-  });
-}
 
-// Check query param or hash on load to pre-select signup
-if (window.location.search.includes("signup=true") || window.location.hash === "#signup") {
-  showForm("signupForm");
-}
+// Initialisiere Klick-Events für Tabs erst, wenn DOM bereit ist
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".ptab").forEach((tab) => {
+    tab.addEventListener("click", () => showForm(tab.dataset.tab));
+  });
+  const toSignup = $("toSignup");
+  if (toSignup) {
+    toSignup.addEventListener("click", (e) => {
+      e.preventDefault();
+      if ($("signupForm")) {
+        showForm("signupForm");
+      } else {
+        location.href = "login.html?signup=true";
+      }
+    });
+  }
+  const toLogin = $("toLogin");
+  if (toLogin) {
+    toLogin.addEventListener("click", (e) => {
+      e.preventDefault();
+      if ($("emailForm")) {
+        showForm("emailForm");
+      } else {
+        location.href = "login.html";
+      }
+    });
+  }
+  if (window.location.search.includes("signup=true") || window.location.hash === "#signup") {
+    showForm("signupForm");
+  }
+});
 
 /* ---------- auth-aware nav + contact gate ---------- */
 onAuthStateChanged(auth, (user) => {
@@ -121,23 +117,12 @@ onAuthStateChanged(auth, (user) => {
       const who = $("contactUser");
       if (who) who.textContent = userIdentifier;
       
-      // Übergibt die Account-Daten an das versteckte Feld im Kontaktformular
       const hiddenField = $("hiddenUserField");
       if (hiddenField) hiddenField.value = userIdentifier;
     } else {
       gate.classList.remove("hidden");
       form.classList.add("hidden");
     }
-  }
-});
-
-/* ---------- consent -> store per user (if signed in) ---------- */
-window.addEventListener("arrow:consent", async () => {
-  const u = auth.currentUser;
-  if (u) {
-    try {
-      await setDoc(doc(db, "users", u.uid), { consent: Date.now() }, { merge: true });
-    } catch (_) {}
   }
 });
 
@@ -234,7 +219,7 @@ if (contactForm) {
     const formData = new FormData(contactForm);
     
     try {
-      // HIER DEINE ECHTE E-MAIL EINTRAGEN
+      // HIER DEINE ECHTE ARROWIT.INFO EMAIL EINTRAGEN
       const response = await fetch("https://formsubmit.co", {
         method: "POST",
         body: formData
