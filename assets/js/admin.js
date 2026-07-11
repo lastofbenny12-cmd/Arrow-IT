@@ -40,27 +40,35 @@
     return Promise.resolve(uid === ADMIN_UID);
   }
 
-
   function setProjects(val) {
     return rtdb.ref("stats/projects").set(val);
   }
 
   function plusOneProjects() {
+    // Avoid transaction for better rule compatibility; read-modify-write.
     const ref = rtdb.ref("stats/projects");
-    return ref.transaction((cur) => {
-      const n = typeof cur === "number" ? cur : parseInt(cur, 10);
-      const safe = Number.isFinite(n) ? n : 0;
-      return safe + 1;
-    });
+    return ref
+      .once("value")
+      .then((snap) => {
+        const v = snap.val();
+        const n = typeof v === "number" ? v : parseInt(v, 10);
+        const safe = Number.isFinite(n) ? n : 0;
+        return ref.set(safe + 1);
+      });
   }
+
 
   // Live read
   rtdb.ref("stats/projects").on("value", (s) => {
     const v = s.val();
-    curProjects.textContent = (v == null ? 0 : v);
+    curProjects.textContent = v == null ? 0 : v;
   });
   rtdb.ref("users").on("value", (s) => {
-    curUsers.textContent = (s.numChildren ? s.numChildren() : (s.val() ? Object.keys(s.val()).length : 0));
+    curUsers.textContent = s.numChildren
+      ? s.numChildren()
+      : s.val()
+        ? Object.keys(s.val()).length
+        : 0;
   });
 
   auth.onAuthStateChanged(async (user) => {
@@ -89,7 +97,13 @@
         await plusOneProjects();
         msg("Projekte erhöht ✦", "var(--teal)");
       } catch (e) {
-        msg("Fehler beim Erhöhen ✦", "var(--pink)");
+        console.error("Admin plusOneProjects error:", e);
+        const code = e && e.code ? e.code : "";
+        const message = e && e.message ? e.message : "";
+        msg(
+          `Fehler beim Erhöhen ✦${code ? " (" + code + ")" : ""}${message ? " — " + message : ""}`.trim(),
+          "var(--pink)",
+        );
       }
     };
 
@@ -99,9 +113,14 @@
         await setProjects(0);
         msg("Projekte auf 0 gesetzt ✦", "var(--teal)");
       } catch (e) {
-        msg("Fehler beim Reset ✦", "var(--pink)");
+        console.error("Admin setProjects error:", e);
+        const code = e && e.code ? e.code : "";
+        const message = e && e.message ? e.message : "";
+        msg(
+          `Fehler beim Reset ✦${code ? " (" + code + ")" : ""}${message ? " — " + message : ""}`.trim(),
+          "var(--pink)",
+        );
       }
     };
   });
 })();
-
