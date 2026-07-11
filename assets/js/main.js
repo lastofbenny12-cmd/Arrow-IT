@@ -48,7 +48,8 @@
       <span class="footer-links">
         <a href="impressum.html">IMPRESSUM</a> ·
         <a href="agb.html">AGB</a> ·
-        <a href="datenschutz.html">DATENSCHUTZ</a>
+        <a href="datenschutz.html">DATENSCHUTZ</a> ·
+        <a href="admin.html" id="footerAdmin">ADMIN</a>
       </span>
       <span class="footer-copy">© 2026 Arrow IT — Web · Software · Tech Support</span>
     </div>
@@ -146,25 +147,50 @@
     revealEls.forEach((el) => el.classList.add("show"));
   }
 
-  /* ---------- count-up stats ---------- */
-  const stats = document.querySelectorAll(".stat-num");
-  function countUp(el) {
-    const target = parseInt(el.dataset.count, 10) || 0;
-    if (reduce) { el.textContent = target; return; }
-    const dur = 1400, start = performance.now();
-    (function tick(now) {
-      const p = Math.min((now - start) / dur, 1);
-      el.textContent = Math.round((1 - Math.pow(1 - p, 3)) * target);
-      if (p < 1) requestAnimationFrame(tick);
-    })(performance.now());
-  }
-  if (stats.length) {
-    if ("IntersectionObserver" in window && !reduce) {
-      const so = new IntersectionObserver((entries) => {
-        entries.forEach((e) => { if (e.isIntersecting) { countUp(e.target); so.unobserve(e.target); } });
-      }, { threshold: 0.6 });
-      stats.forEach((s) => so.observe(s));
-    } else stats.forEach(countUp);
+  /* ---------- count-up stats (live from Realtime DB) ---------- */
+  const statEls = document.querySelectorAll(".stat-num[data-stat]");
+  if (statEls.length) {
+    const hasDB = !!(window.firebase && firebase.database);
+    let vals = {};
+    function animate(el, target) {
+      const from = parseInt((el.textContent || "0").replace(/\D/g, "")) || 0;
+      if (reduce) { el.textContent = target; return; }
+      const dur = 1100, start = performance.now();
+      (function step(now) {
+        const p = Math.min((now - start) / dur, 1);
+        el.textContent = Math.round(from + (target - from) * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) requestAnimationFrame(step);
+      })(performance.now());
+    }
+    function applyAll() {
+      statEls.forEach((el) => {
+        const key = el.dataset.stat;
+        const target = vals[key] != null ? vals[key] : (parseInt(el.dataset.count, 10) || 0);
+        if (el._shown) animate(el, target);
+        else el._pending = target;
+      });
+    }
+    if (hasDB) {
+      firebase.database().ref("stats").on("value", (s) => { vals = s.val() || {}; applyAll(); });
+      firebase.database().ref("users").on("value", (s) => { vals.users = s.numChildren(); applyAll(); });
+    }
+    const so = ("IntersectionObserver" in window && !reduce)
+      ? new IntersectionObserver((entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              const el = e.target;
+              el._shown = true;
+              const t = el._pending != null ? el._pending : (parseInt(el.dataset.count, 10) || 0);
+              animate(el, t);
+              so.unobserve(el);
+            }
+          });
+        }, { threshold: 0.5 })
+      : null;
+    statEls.forEach((el) => {
+      if (so) so.observe(el);
+      else { el._shown = true; animate(el, parseInt(el.dataset.count, 10) || 0); }
+    });
   }
 
   /* ---------- floaters parallax ---------- */
@@ -194,7 +220,18 @@
       cx += (mx - cx) * 0.18; cy += (my - cy) * 0.18;
       cursor.style.transform = `translate(${cx}px, ${cy}px) translate(-50%, -50%)`;
       requestAnimationFrame(loop);
-    })();
+  /* ---------- Live-Chat (Tawk.to, nicht Firebase) ---------- */
+  (function injectChat() {
+    const TALK_ID = "6a5291b04a08c51d4df0796c";
+    const s1 = document.createElement("script");
+    s1.async = true;
+    s1.src = "https://embed.tawk.to/" + TALK_ID + "/default";
+    s1.charset = "UTF-8";
+    s1.setAttribute("crossorigin", "*");
+    document.head.appendChild(s1);
+  })();
+
+})();
     document.querySelectorAll("a, button, input, .poster, .lineup-row, label").forEach((el) => {
       el.addEventListener("pointerenter", () => cursor.classList.add("hover"));
       el.addEventListener("pointerleave", () => cursor.classList.remove("hover"));

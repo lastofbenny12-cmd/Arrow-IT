@@ -645,6 +645,10 @@ body.locked { overflow: hidden; }
   font-size: 13px; text-align: center; margin-top: 16px; padding: 12px;
   border: 1.5px dashed rgba(22,22,22,.25); border-radius: var(--r-sm); opacity: .85;
 }
+.uid-note {
+  font-size: 13px; text-align: center; margin-top: 10px; opacity: .8; letter-spacing: .5px;
+}
+.uid-note span { font-family: var(--brand); font-weight: 600; color: var(--pink); }
 
 /* ---- 404 ---- */
 .err { min-height: 100vh; display: grid; place-items: center; text-align: center; padding: 120px 20px; position: relative; z-index: 2; }

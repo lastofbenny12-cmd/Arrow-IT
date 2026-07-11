@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
@@ -50,6 +50,7 @@
       <img class="logo-mark portal-logo" src="assets/img/logo.svg" alt="Arrow IT" />
       <h2 class="portal-title">CONTACT</h2>
       <p class="portal-sub">signed in as <span id="contactUser">…</span></p>
+      <p class="uid-note">deine User-ID: <span id="contactUid">…</span></p>
       <form class="portal-form" id="contactForm" autocomplete="off">
         <label class="field"><input type="text" name="subject" placeholder=" " required /><span class="field-label">SUBJECT</span></label>
         <label class="field"><textarea name="message" placeholder=" " required rows="4" style="padding-top:18px"></textarea><span class="field-label">MESSAGE</span></label>
@@ -61,7 +62,13 @@
   </main>
 
   <script src="assets/js/main.js"></script>
-  <script type="module" src="assets/js/firebase.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="assets/js/firebase.js"></script>
 </body>
 </html>
+
 

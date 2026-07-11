@@ -78,7 +78,7 @@
             <div class="poster-icon">🛠</div>
             <h3 class="poster-title">TECH<br />SUPPORT</h3>
             <p class="poster-text">Hilfe &<br />Wartung.</p>
-            <a href="services.html" class="poster-enter">ENTER ➤</a>
+            <a href="services.html" class="poster-enter">Auser Betrieb ➤</a>
           </div>
         </article>
       </div>
@@ -87,7 +87,7 @@
     <!-- ============ PORTFOLIO ============ -->
     <section class="projects" id="projects">
       <div class="section-head center">
-        <span class="kicker">✦ festival lineup</span>
+        <span class="kicker">✦ lineup</span>
         <h2 class="section-title">ARROW PROJECTS 2026</h2>
       </div>
       <ul class="lineup">
@@ -125,9 +125,10 @@
               <span>WEB</span><span>SOFTWARE</span><span>TECH SUPPORT</span><span>DIGITAL EXPERIENCES</span>
             </div>
             <div class="about-stats">
-              <div class="stat"><span class="stat-num" data-count="18">0</span><span class="stat-label">Projekte</span></div>
-              <div class="stat"><span class="stat-num" data-count="3">0</span><span class="stat-label">Support </span></div>
-              <div class="stat"><span class="stat-num" data-count="100">0</span><span class="stat-label">% Custom</span></div>
+              <div class="stat"><span class="stat-num" data-stat="projects" data-count="0">0</span><span class="stat-label">Projekte</span></div>
+              <div class="stat"><span class="stat-num" data-stat="support" data-count="3">0</span><span class="stat-label">Support / 7</span></div>
+              <div class="stat"><span class="stat-num" data-stat="custom" data-count="100">0</span><span class="stat-label">% Custom</span></div>
+              <div class="stat"><span class="stat-num" data-stat="users" data-count="0">0</span><span class="stat-label">USER</span></div>
             </div>
           </div>
         </div>
@@ -164,6 +165,12 @@
   </main>
 
   <script src="assets/js/main.js"></script>
-  <script type="module" src="assets/js/firebase.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="assets/js/firebase.js"></script>
 </body>
 </html>
+

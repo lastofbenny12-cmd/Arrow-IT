@@ -1,27 +1,10 @@
 /* =========================================================
-   ARROW IT — firebase.js (Auth + Firestore)
-   Email/Password + Phone auth, Sign-Up, Contact storage.
+   ARROW IT — firebase.js (Compat build)
+   Klassische Scripts (kein ES-Modul) -> läuft auch
+   lokal/über file://. Email/Password + Phone Auth,
+   Sign-Up, Kontakt per Mail + Firestore, User in
+   Realtime Database.
    ========================================================= */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  signInWithPhoneNumber,
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  RecaptchaVerifier,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  doc,
-  setDoc,
-  serverTimestamp,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
 const firebaseConfig = {
   apiKey: "AIzaSyAT20uUB6t2Wpkh0zvcBVacx9uM_A1f2w8",
   authDomain: "arrow-it-6b942.firebaseapp.com",
@@ -30,12 +13,15 @@ const firebaseConfig = {
   messagingSenderId: "783659580320",
   appId: "1:783659580320:web:83fa43c06d79a49ccf02c5",
   measurementId: "G-EFH5RNZFPD",
+  databaseURL: "https://arrow-it-6b942-default-rtdb.europe-west1.firebasedatabase.app/",
 };
 
-const app = initializeApp(firebaseConfig);
-getAnalytics(app);
-const auth = getAuth(app);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+if (firebase.analytics) firebase.analytics();
+const auth = firebase.auth();
+const db = firebase.firestore();
+const rtdb = firebase.database();
+function goContact() { return !/(contact|admin|login)\.html/.test(location.pathname); }
 
 const $ = (id) => document.getElementById(id);
 const setMsg = (text, color) => {
@@ -43,7 +29,7 @@ const setMsg = (text, color) => {
   if (m) { m.textContent = text; m.style.color = color || "var(--pink)"; }
 };
 function mapError(err) {
-  const c = err?.code || "";
+  const c = err && err.code ? err.code : "";
   if (c.includes("invalid-credential") || c.includes("wrong-password")) return "wrong email or password ✦";
   if (c.includes("user-not-found")) return "no account found ✦";
   if (c.includes("email-already-in-use")) return "email already registered ✦";
@@ -52,10 +38,58 @@ function mapError(err) {
   if (c.includes("invalid-verification-code")) return "wrong code ✦";
   if (c.includes("too-many-requests")) return "too many tries — wait a bit ✦";
   if (c.includes("auth")) return "auth error ✦ check Firebase console";
-  return err?.message || "something went wrong ✦";
+  return (err && err.message) || "something went wrong ✦";
 }
 
-/* ---------- form/tab switching (EMAIL / PHONE / SIGNUP) ---------- */
+/* ---------- user -> Realtime Database ---------- */
+function saveUser(user) {
+  if (!user) return;
+  rtdb.ref("users/" + user.uid).set({
+    user: user.displayName || user.email || user.phoneNumber || "",
+    email: user.email || "",
+    uid: user.uid,
+  }).catch(() => {});
+}
+
+/* ---------- auth-aware nav + contact gate ---------- */
+auth.onAuthStateChanged((user) => {
+  const nl = $("navLogin");
+  if (nl) {
+    if (user) {
+      nl.textContent = "LOGOUT";
+      nl.onclick = (e) => { e.preventDefault(); auth.signOut(); };
+    } else {
+      nl.textContent = "LOGIN";
+      nl.onclick = null;
+    }
+  }
+  const gate = $("gateView");
+  const form = $("formView");
+  if (gate && form) {
+    if (user) {
+      gate.classList.add("hidden");
+      form.classList.remove("hidden");
+      const who = $("contactUser");
+      if (who) who.textContent = user.email || user.phoneNumber || "";
+      const uid = $("contactUid");
+      if (uid) uid.textContent = user.uid;
+      saveUser(user);
+    } else {
+      gate.classList.remove("hidden");
+      form.classList.add("hidden");
+    }
+  } else if (user) {
+    saveUser(user);
+  }
+});
+
+/* ---------- consent -> store per user (Firestore) ---------- */
+window.addEventListener("arrow:consent", () => {
+  const u = auth.currentUser;
+  if (u) db.collection("users").doc(u.uid).set({ consent: Date.now() }, { merge: true }).catch(() => {});
+});
+
+/* ---------- form/tab switching ---------- */
 function showForm(name) {
   ["emailForm", "phoneForm", "signupForm"].forEach((id) => {
     const el = $(id);
@@ -69,105 +103,41 @@ function showForm(name) {
   if (s2l) s2l.classList.toggle("hidden", name !== "signupForm");
   setMsg("");
 }
-document.querySelectorAll(".ptab").forEach((tab) => {
-  tab.addEventListener("click", () => showForm(tab.dataset.tab));
-});
+document.querySelectorAll(".ptab").forEach((tab) => tab.addEventListener("click", () => showForm(tab.dataset.tab)));
 const toSignup = $("toSignup");
-if (toSignup) {
-  toSignup.addEventListener("click", (e) => {
-    e.preventDefault();
-    if ($("signupForm")) {
-      showForm("signupForm");
-    } else {
-      location.href = "login.html?signup=true";
-    }
-  });
-}
+if (toSignup) toSignup.addEventListener("click", (e) => {
+  e.preventDefault();
+  if ($("signupForm")) showForm("signupForm"); else location.href = "login.html?signup=true";
+});
 const toLogin = $("toLogin");
-if (toLogin) {
-  toLogin.addEventListener("click", (e) => {
-    e.preventDefault();
-    if ($("emailForm")) {
-      showForm("emailForm");
-    } else {
-      location.href = "login.html";
-    }
-  });
-}
-
-// Check query param or hash on load to pre-select signup
-if (window.location.search.includes("signup=true") || window.location.hash === "#signup") {
-  showForm("signupForm");
-}
-
-/* ---------- auth-aware nav + contact gate ---------- */
-onAuthStateChanged(auth, (user) => {
-  const nl = $("navLogin");
-  if (nl) {
-    if (user) {
-      nl.textContent = "LOGOUT";
-      nl.onclick = (e) => { e.preventDefault(); signOut(auth); };
-    } else {
-      nl.textContent = "LOGIN";
-      nl.onclick = null;
-    }
-  }
-  const gate = $("gateView");
-  const form = $("formView");
-
-  // Only toggle contact gate if this page actually contains the elements.
-  // Otherwise, never hide/show things on login/index pages.
-  if (gate && form) {
-    if (user) {
-      gate.classList.add("hidden");
-      form.classList.remove("hidden");
-      const who = $("contactUser");
-      if (who) who.textContent = user.email || user.phoneNumber || "";
-    } else {
-      gate.classList.remove("hidden");
-      form.classList.add("hidden");
-    }
-  }
-
+if (toLogin) toLogin.addEventListener("click", (e) => {
+  e.preventDefault();
+  if ($("emailForm")) showForm("emailForm"); else location.href = "login.html";
 });
-
-/* ---------- consent -> store per user (if signed in) ---------- */
-window.addEventListener("arrow:consent", async () => {
-  const u = auth.currentUser;
-  if (u) {
-    try {
-      await setDoc(doc(db, "users", u.uid), { consent: Date.now() }, { merge: true });
-    } catch (_) {}
-  }
-});
+if (location.search.includes("signup=true") || location.hash === "#signup") showForm("signupForm");
 
 /* ---------- EMAIL / PASSWORD login ---------- */
 const emailForm = $("emailForm");
 if (emailForm) {
-  emailForm.addEventListener("submit", async (e) => {
+  emailForm.addEventListener("submit", (e) => {
     e.preventDefault();
     setMsg("connecting to Arrow Portal…", "var(--teal)");
-    try {
-      await signInWithEmailAndPassword(auth, emailForm.email.value.trim(), emailForm.password.value);
+    auth.signInWithEmailAndPassword(emailForm.email.value.trim(), emailForm.password.value)
+      .then(() => {
       setMsg("welcome back ✦", "var(--teal)");
-      if (!location.pathname.includes("contact.html")) {
+      if (goContact()) {
         setTimeout(() => (location.href = "contact.html"), 700);
       }
-    } catch (err) { setMsg(mapError(err), "var(--pink)"); }
-  });
-}
 
 /* ---------- SIGN UP ---------- */
 const signupForm = $("signupForm");
 if (signupForm) {
-  signupForm.addEventListener("submit", async (e) => {
+  signupForm.addEventListener("submit", (e) => {
     e.preventDefault();
     setMsg("creating account…", "var(--teal)");
-    try {
-      await createUserWithEmailAndPassword(auth, signupForm.email.value.trim(), signupForm.password.value);
-      setMsg("account created ✦", "var(--teal)");
-      setTimeout(() => (location.href = "contact.html"), 700);
-    } catch (err) { setMsg(mapError(err), "var(--pink)"); }
+    auth.createUserWithEmailAndPassword(signupForm.email.value.trim(), signupForm.password.value)
+      .then(() => { setMsg("account created ✦", "var(--teal)"); setTimeout(() => (location.href = "contact.html"), 700); })
+      .catch((err) => setMsg(mapError(err), "var(--pink)"));
   });
 }
 
@@ -178,49 +148,37 @@ const phoneForm = $("phoneForm");
 const sendCode = $("sendCode");
 const verifyCode = $("verifyCode");
 const codeField = $("codeField");
-
 function getVerifier() {
-  if (!verifier) {
-    verifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
-  }
+  if (!verifier) verifier = new firebase.auth.RecaptchaVerifier("recaptcha-container", { size: "invisible" });
   return verifier;
 }
 if (sendCode) {
-  sendCode.addEventListener("click", async () => {
+  sendCode.addEventListener("click", () => {
     const phone = phoneForm.phone.value.trim();
     if (!phone) { setMsg("enter your phone number ✦"); return; }
     setMsg("sending code…", "var(--teal)");
-    try {
-      confirmationResult = await signInWithPhoneNumber(auth, phone, getVerifier());
-      codeField.classList.remove("hidden");
-      verifyCode.classList.remove("hidden");
-      setMsg("code sent ✦", "var(--teal)");
-    } catch (err) { setMsg(mapError(err), "var(--pink)"); }
+    auth.signInWithPhoneNumber(phone, getVerifier())
+      .then((res) => { confirmationResult = res; codeField.classList.remove("hidden"); verifyCode.classList.remove("hidden"); setMsg("code sent ✦", "var(--teal)"); })
+      .catch((err) => setMsg(mapError(err), "var(--pink)"));
   });
 }
 if (phoneForm) {
-  phoneForm.addEventListener("submit", async (e) => {
+  phoneForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const code = phoneForm.code.value.trim();
     if (!code || !confirmationResult) { setMsg("enter the code ✦"); return; }
-    try {
-      await confirmationResult.confirm(code);
-      setMsg("welcome back ✦", "var(--teal)");
-      if (!location.pathname.includes("contact.html")) {
-        setTimeout(() => (location.href = "contact.html"), 700);
-      }
-    } catch (err) { setMsg("wrong code ✦", "var(--pink)"); }
+    confirmationResult.confirm(code)
+      .then(() => { setMsg("welcome back ✦", "var(--teal)"); if (!location.pathname.includes("contact.html")) setTimeout(() => (location.href = "contact.html"), 700); })
+      .catch(() => setMsg("wrong code ✦", "var(--pink)"));
   });
 }
 
-/* ---------- CONTACT submit -> Firestore ---------- */
+/* ---------- CONTACT -> Mail (arrowit.info@gmail.com) + Firestore ---------- */
+const CONTACT_MAIL = "arrowit.info@gmail.com";
 const contactForm = $("contactForm");
 if (contactForm) {
-  const cmsg = (t, c) => {
-    const m = $("contactMsg");
-    if (m) { m.textContent = t; m.style.color = c || "var(--pink)"; }
-  };
-  contactForm.addEventListener("submit", async (e) => {
+  const cmsg = (t, c) => { const m = $("contactMsg"); if (m) { m.textContent = t; m.style.color = c || "var(--pink)"; } };
+  contactForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const user = auth.currentUser;
     if (!user) { cmsg("please sign in first ✦"); return; }
@@ -228,16 +186,18 @@ if (contactForm) {
     const message = contactForm.elements.message.value.trim();
     if (!subject || !message) { cmsg("fill in all fields ✦"); return; }
     cmsg("sending…", "var(--teal)");
-    try {
-      await addDoc(collection(db, "contacts"), {
-        uid: user.uid,
-        email: user.email || user.phoneNumber || "",
-        subject,
-        message,
-        createdAt: serverTimestamp(),
-      });
-      cmsg("message sent — stored on Firebase only 🔒", "var(--teal)");
-      contactForm.reset();
-    } catch (err) { cmsg(mapError(err)); }
+    // copy to Firestore (stored on Firebase only)
+    db.collection("contacts").add({
+      uid: user.uid,
+      email: user.email || user.phoneNumber || "",
+      subject, message,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }).catch(() => {});
+    // open pre-filled email to arrowit.info@gmail.com
+    const s = encodeURIComponent("Arrow IT Kontakt — " + subject);
+    const b = encodeURIComponent("Von: " + (user.email || user.phoneNumber || "") + "\n\n" + message);
+    location.href = "mailto:" + CONTACT_MAIL + "?subject=" + s + "&body=" + b;
+    cmsg("message sent 🔒 stored on Firebase + mail opened", "var(--teal)");
+    contactForm.reset();
   });
 }

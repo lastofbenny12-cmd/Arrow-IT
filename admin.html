@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — ARROW IT</title>
+  <meta name="description" content="Admin Panel — Arrow IT Stats" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml" />
+</head>
+<body>
+  <main>
+    <header class="page-hero">
+      <span class="kicker">✦ admin panel</span>
+      <h1>WHO WE ARE</h1>
+      <p>Live Stats für Projekte/Support/Custom (RTDB)</p>
+    </header>
+
+    <section class="detail" style="max-width: 980px;">
+      <div class="detail-card" style="grid-template-columns: 1fr;">
+        <div>
+          <h2 style="font-size: 32px;">Stats steuern</h2>
+          <p style="margin-top: 10px; opacity: .8; font-size: 15px;">Mit einem Klick wird <b>Projekte</b> um +1 erhöht. Mit Reset wird es auf 0 gesetzt.</p>
+
+          <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:22px;">
+            <button class="btn-ghost" id="btnReset" type="button">RESET Projekte → 0</button>
+            <button class="btn-main" id="btnPlus1" type="button" style="border: none;">+1 Projekte</button>
+          </div>
+
+          <div id="adminMsg" class="portal-msg" style="margin-top: 16px; min-height: 20px;"></div>
+
+          <div style="margin-top: 26px; display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px;">
+            <div class="detail-card" style="margin:0; padding: 18px; display:block;">
+              <h2 style="font-size: 18px; margin: 0;">Aktuell Projekte</h2>
+              <div style="font-family: var(--brand); font-weight: 800; font-size: 34px; color: var(--pink);" id="curProjects">0</div>
+            </div>
+            <div class="detail-card" style="margin:0; padding: 18px; display:block;">
+              <h2 style="font-size: 18px; margin: 0;">Aktuell Users</h2>
+              <div style="font-family: var(--brand); font-weight: 800; font-size: 34px; color: var(--teal);" id="curUsers">0</div>
+            </div>
+          </div>
+
+          <div style="margin-top: 14px; opacity:.7; font-size: 13px;">
+            Hinweis: Werte sind nur sichtbar, wenn in RTDB unter <code>stats/projects</code> und <code>users</code> Daten anliegen.
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/js/main.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <script src="assets/js/firebase.js"></script>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
+
