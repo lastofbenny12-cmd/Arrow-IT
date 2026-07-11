@@ -236,7 +236,7 @@ a { color: inherit; text-decoration: none; }
   color: #fff; padding: 16px 34px; border-radius: 99px;
   background: linear-gradient(135deg, var(--pink), var(--pink-soft));
   box-shadow: var(--glow-pink);
-  opacity: 0; transform: translateY(12px);
+  opacity: 1; transform: translateY(12px);
   transition: transform .25s, box-shadow .25s;
 }
 .btn-main.in { animation: fadeUp .7s ease .9s forwards; }
