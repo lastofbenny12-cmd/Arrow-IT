@@ -32,9 +32,14 @@
   const auth = firebase.auth();
   const rtdb = firebase.database();
 
+  // Hardcoded admin UID (for local demo).
+  // If you want RTDB-based admins again, re-enable isAdmin() with Firebase Rules.
+  const ADMIN_UID = "FZa8noRcaNVY5m59Hs8Z5mP5ezO2";
+
   function isAdmin(uid) {
-    return rtdb.ref("admins/" + uid).once("value").then((s) => s.val() === true);
+    return Promise.resolve(uid === ADMIN_UID);
   }
+
 
   function setProjects(val) {
     return rtdb.ref("stats/projects").set(val);

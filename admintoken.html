@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login — ARROW IT</title>
+  <meta name="description" content="Admin Login — Arrow IT" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <link rel="icon" href="assets/img/logo.svg" type="image/svg+xml" />
+</head>
+<body>
+  <main>
+    <header class="page-hero">
+      <span class="kicker">✦ admin login</span>
+      <h1>ADMIN</h1>
+      <p>Nur für den Admin UID-Besitzer.</p>
+    </header>
+
+    <section class="portal auth-card">
+      <div class="portal-glow" aria-hidden="true"></div>
+      <img class="logo-mark portal-logo" src="assets/img/logo.svg" alt="Arrow IT" />
+      <h2 class="portal-title">ARROW ADMIN</h2>
+      <p class="portal-sub">Einloggen</p>
+
+      <div style="font-family: var(--brand); font-weight: 600; font-size: 14px; opacity: .85; margin: 8px 0 18px;">
+        Wenn du mit Email/Passwort nicht rein kommst: nutze deinen vorhandenen Admin-Account.
+      </div>
+
+      <form class="portal-form" id="adminEmailForm" autocomplete="off">
+        <label class="field">
+          <input type="email" name="email" placeholder=" " required />
+          <span class="field-label">EMAIL</span>
+        </label>
+        <label class="field">
+          <input type="password" name="password" placeholder=" " required />
+          <span class="field-label">PASSWORD</span>
+        </label>
+        <button type="submit" class="btn-main full">LOGIN <span class="btn-arrow">➤</span></button>
+      </form>
+
+      <div id="adminTokenMsg" class="portal-msg" style="margin-top: 16px;"></div>
+
+      <div class="auth-switch">
+        <span>Zurück zu</span> <a href="index.html" class="btn-ghost" style="padding: 10px 18px;">HOME</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/js/main.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="assets/js/firebase.js"></script>
+  <script>
+    (function(){
+      const ADMIN_UID = "FZa8noRcaNVY5m59Hs8Z5mP5ezO2";
+      const $ = (id) => document.getElementById(id);
+      const form = $("adminEmailForm");
+      const out = $("adminTokenMsg");
+      if (!form) return;
+
+      const setMsg = (t, c) => { if (!out) return; out.textContent = t; out.style.color = c || "var(--pink)"; };
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        setMsg("Login…", "var(--teal)");
+        const email = form.email.value.trim();
+        const pw = form.password.value;
+        firebase.auth().signInWithEmailAndPassword(email, pw)
+          .then(() => {
+            const user = firebase.auth().currentUser;
+            if (!user) { setMsg("User nicht gefunden ✦", "var(--pink)"); return; }
+            if (user.uid !== ADMIN_UID) {
+              setMsg("Nicht berechtigt (UID passt nicht) ✦", "var(--pink)");
+              firebase.auth().signOut().catch(()=>{});
+              return;
+            }
+            setMsg("ADMIN akzeptiert ✦", "var(--teal)");
+            setTimeout(() => (location.href = "admin.html"), 400);
+          })
+          .catch((err) => {
+            const msg = (err && (err.code || err.message)) ? (err.code || err.message) : "Fehler";
+            setMsg("Login fehlgeschlagen ✦" + (msg ? " ("+msg+")" : ""), "var(--pink)");
+          });
+      });
+    })();
+  </script>
+</body>
+</html>
+

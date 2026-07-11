@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin — ARROW IT</title>
+<title>Admin — ARROW IT</title>
+  <meta name="robots" content="noindex" />
   <meta name="description" content="Admin Panel — Arrow IT Stats" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -48,16 +49,37 @@
         </div>
       </div>
     </section>
-  </main>
+</main>
+
+  <script>
+    (function(){
+      var ADMIN_UID = "FZa8noRcaNVY5m59Hs8Z5mP5ezO2";
+      // admin login page will validate, but also enforce on this page
+      document.addEventListener('DOMContentLoaded', function(){
+        if (!window.firebase || !firebase.auth) return;
+        firebase.auth().onAuthStateChanged(function(user){
+          if (!user) {
+            location.href = 'admintoken.html';
+            return;
+          }
+          if (user.uid !== ADMIN_UID) {
+            firebase.auth().signOut().catch(function(){});
+            location.href = 'admintoken.html';
+          }
+        });
+      });
+    })();
+  </script>
 
   <script src="assets/js/main.js"></script>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
   <script src="assets/js/firebase.js"></script>
-  <script src="assets/js/admin.js"></script>
+<script src="assets/js/admin.js"></script>
 </body>
 </html>
 
