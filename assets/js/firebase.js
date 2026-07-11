@@ -234,7 +234,7 @@ if (contactForm) {
     const formData = new FormData(contactForm);
     
     try {
-      // HIER DEINE ECHTE E-MAIL EINTRAGEN (z.B. info@arrowit.info)
+      // HIER DEINE ECHTE E-MAIL EINTRAGEN
       const response = await fetch("https://formsubmit.co", {
         method: "POST",
         body: formData
@@ -245,7 +245,6 @@ if (contactForm) {
         cmsg("✓ message sent successfully! ✦", "var(--teal)");
         contactForm.reset();
         
-        // Verstecktes Feld nach Reset wieder befüllen
         const hiddenField = $("hiddenUserField");
         if (hiddenField) hiddenField.value = user.email || user.phoneNumber || "";
       } else {
