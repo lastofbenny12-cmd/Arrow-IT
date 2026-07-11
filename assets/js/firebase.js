@@ -1,9 +1,9 @@
 /* =========================================================
-   ARROW IT — firebase.js (Auth + FormSubmit Email)
-   Email/Password + Phone auth, Sign-Up, Contact Email Delivery.
+   ARROW IT — firebase.js (Auth + Firestore)
+   Email/Password + Phone auth, Sign-Up, Contact storage.
    ========================================================= */
-import { initializeApp } from "https://gstatic.com";
-import { getAnalytics } from "https://gstatic.com";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -12,11 +12,19 @@ import {
   signOut,
   onAuthStateChanged,
   RecaptchaVerifier,
-} from "https://gstatic.com";
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  doc,
+  setDoc,
+  serverTimestamp,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAT20uUB6t2Wpkh0zvcBVacx9uM_A1f2w8",
-  authDomain: "://firebaseapp.com",
+  authDomain: "arrow-it-6b942.firebaseapp.com",
   projectId: "arrow-it-6b942",
   storageBucket: "arrow-it-6b942.firebasestorage.app",
   messagingSenderId: "783659580320",
@@ -27,6 +35,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 getAnalytics(app);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 const $ = (id) => document.getElementById(id);
 const setMsg = (text, color) => {
@@ -60,73 +69,75 @@ function showForm(name) {
   if (s2l) s2l.classList.toggle("hidden", name !== "signupForm");
   setMsg("");
 }
-
-// Wartet bis das DOM geladen ist, falls Elemente dynamisch sind
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".ptab").forEach((tab) => {
-    tab.addEventListener("click", () => showForm(tab.dataset.tab));
-  });
-  const toSignup = $("toSignup");
-  if (toSignup) {
-    toSignup.addEventListener("click", (e) => {
-      e.preventDefault();
-      if ($("signupForm")) {
-        showForm("signupForm");
-      } else {
-        location.href = "login.html?signup=true";
-      }
-    });
-  }
-  const toLogin = $("toLogin");
-  if (toLogin) {
-    toLogin.addEventListener("click", (e) => {
-      e.preventDefault();
-      if ($("emailForm")) {
-        showForm("emailForm");
-      } else {
-        location.href = "login.html";
-      }
-    });
-  }
-  if (window.location.search.includes("signup=true") || window.location.hash === "#signup") {
-    showForm("signupForm");
-  }
+document.querySelectorAll(".ptab").forEach((tab) => {
+  tab.addEventListener("click", () => showForm(tab.dataset.tab));
 });
+const toSignup = $("toSignup");
+if (toSignup) {
+  toSignup.addEventListener("click", (e) => {
+    e.preventDefault();
+    if ($("signupForm")) {
+      showForm("signupForm");
+    } else {
+      location.href = "login.html?signup=true";
+    }
+  });
+}
+const toLogin = $("toLogin");
+if (toLogin) {
+  toLogin.addEventListener("click", (e) => {
+    e.preventDefault();
+    if ($("emailForm")) {
+      showForm("emailForm");
+    } else {
+      location.href = "login.html";
+    }
+  });
+}
+
+// Check query param or hash on load to pre-select signup
+if (window.location.search.includes("signup=true") || window.location.hash === "#signup") {
+  showForm("signupForm");
+}
 
 /* ---------- auth-aware nav + contact gate ---------- */
 onAuthStateChanged(auth, (user) => {
-  // Kurze Verzögerung für die dynamische Navigation aus main.js
-  setTimeout(() => {
-    const nl = $("navLogin");
-    if (nl) {
-      if (user) {
-        nl.textContent = "LOGOUT";
-        nl.onclick = (e) => { e.preventDefault(); signOut(auth); };
-      } else {
-        nl.textContent = "LOGIN";
-        nl.onclick = null;
-      }
+  const nl = $("navLogin");
+  if (nl) {
+    if (user) {
+      nl.textContent = "LOGOUT";
+      nl.onclick = (e) => { e.preventDefault(); signOut(auth); };
+    } else {
+      nl.textContent = "LOGIN";
+      nl.onclick = null;
     }
-  }, 50);
-
+  }
   const gate = $("gateView");
   const form = $("formView");
 
+  // Only toggle contact gate if this page actually contains the elements.
+  // Otherwise, never hide/show things on login/index pages.
   if (gate && form) {
     if (user) {
       gate.classList.add("hidden");
       form.classList.remove("hidden");
-      
-      const userIdentifier = user.email || user.phoneNumber || "";
       const who = $("contactUser");
-      if (who) who.textContent = userIdentifier;
-      
-      const hiddenField = $("hiddenUserField");
-      if (hiddenField) hiddenField.value = userIdentifier;
+      if (who) who.textContent = user.email || user.phoneNumber || "";
     } else {
       gate.classList.remove("hidden");
       form.classList.add("hidden");
     }
+  }
+
+});
+
+/* ---------- consent -> store per user (if signed in) ---------- */
+window.addEventListener("arrow:consent", async () => {
+  const u = auth.currentUser;
+  if (u) {
+    try {
+      await setDoc(doc(db, "users", u.uid), { consent: Date.now() }, { merge: true });
+    } catch (_) {}
   }
 });
 
@@ -181,8 +192,8 @@ if (sendCode) {
     setMsg("sending code…", "var(--teal)");
     try {
       confirmationResult = await signInWithPhoneNumber(auth, phone, getVerifier());
-      if (codeField) codeField.classList.remove("hidden");
-      if (verifyCode) verifyCode.classList.remove("hidden");
+      codeField.classList.remove("hidden");
+      verifyCode.classList.remove("hidden");
       setMsg("code sent ✦", "var(--teal)");
     } catch (err) { setMsg(mapError(err), "var(--pink)"); }
   });
@@ -202,7 +213,7 @@ if (phoneForm) {
   });
 }
 
-/* ---------- CONTACT submit -> FormSubmit AJAX ---------- */
+/* ---------- CONTACT submit -> Firestore ---------- */
 const contactForm = $("contactForm");
 if (contactForm) {
   const cmsg = (t, c) => {
@@ -213,35 +224,20 @@ if (contactForm) {
     e.preventDefault();
     const user = auth.currentUser;
     if (!user) { cmsg("please sign in first ✦"); return; }
-    
     const subject = contactForm.elements.subject.value.trim();
     const message = contactForm.elements.message.value.trim();
     if (!subject || !message) { cmsg("fill in all fields ✦"); return; }
-    
     cmsg("sending…", "var(--teal)");
-    
-    const formData = new FormData(contactForm);
-    
     try {
-      // HIER DEINE ECHTE EMAIL EINTRAGEN (z.B. kontakt@arrowit.info)
-      const response = await fetch("https://formsubmit.co", {
-        method: "POST",
-        body: formData
+      await addDoc(collection(db, "contacts"), {
+        uid: user.uid,
+        email: user.email || user.phoneNumber || "",
+        subject,
+        message,
+        createdAt: serverTimestamp(),
       });
-      const data = await response.json();
-      
-      if (data.success === "true" || data.success === true) {
-        cmsg("✓ message sent successfully! ✦", "var(--teal)");
-        contactForm.reset();
-        
-        const hiddenField = $("hiddenUserField");
-        if (hiddenField) hiddenField.value = user.email || user.phoneNumber || "";
-      } else {
-        cmsg("error sending message ✦", "var(--pink)");
-      }
-    } catch (err) {
-      cmsg("network error ✦ please check connection", "var(--pink)");
-      console.error(err);
-    }
+      cmsg("message sent — stored on Firebase only 🔒", "var(--teal)");
+      contactForm.reset();
+    } catch (err) { cmsg(mapError(err)); }
   });
 }
