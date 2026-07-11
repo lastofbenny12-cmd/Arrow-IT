@@ -265,7 +265,8 @@ if (phoneForm) {
 }
 
 /* ---------- CONTACT -> Mail (arrowit.info@gmail.com) + Firestore ---------- */
-const CONTACT_MAIL = "arrowit.info@gmail.com";
+const CONTACT_MAIL = "tickets@arrow-it-n61ymm.p.tawk.email";
+
 const contactForm = $("contactForm");
 
 if (contactForm) {

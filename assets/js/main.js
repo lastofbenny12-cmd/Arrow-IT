@@ -44,7 +44,7 @@
   <footer class="footer">
     <div class="footer-inner">
       <span class="footer-brand"><img class="logo-mark foot-logo" src="assets/img/logo.svg" alt="Arrow IT" /> ARROW IT</span>
-      <span class="footer-tag">IT made easy ✦ Y2K Digital Future</span>
+      <span class="footer-tag">IT made easy ✦ Digital Future</span>
       <span class="footer-links">
         <a href="impressum.html">IMPRESSUM</a> ·
         <a href="agb.html">AGB</a> ·
@@ -171,8 +171,20 @@
       });
     }
     if (hasDB) {
-      firebase.database().ref("stats").on("value", (s) => { vals = s.val() || {}; applyAll(); });
-      firebase.database().ref("users").on("value", (s) => { vals.users = s.numChildren(); applyAll(); });
+      // projects/support/custom come from stats/<key>
+      firebase.database().ref("stats").on("value", (s) => {
+        const v = s.val() || {};
+        vals = v;
+        applyAll();
+      });
+
+      // users counter = number of auth users stored under users/<uid>
+      // (main.js reads users via RTDB; firebase.js stores the current user into users/{uid})
+      firebase.database().ref("users").on("value", (s) => {
+        // Prefer numChildren() (fast, correct for object maps)
+        vals.users = typeof s.numChildren === "function" ? s.numChildren() : 0;
+        applyAll();
+      });
     }
     const so = ("IntersectionObserver" in window && !reduce)
       ? new IntersectionObserver((entries) => {
@@ -220,23 +232,24 @@
       cx += (mx - cx) * 0.18; cy += (my - cy) * 0.18;
       cursor.style.transform = `translate(${cx}px, ${cy}px) translate(-50%, -50%)`;
       requestAnimationFrame(loop);
-  /* ---------- Live-Chat (Tawk.to, nicht Firebase) ---------- */
-  (function injectChat() {
-    const TALK_ID = "6a5291b04a08c51d4df0796c";
-    const s1 = document.createElement("script");
-    s1.async = true;
-    s1.src = "https://embed.tawk.to/" + TALK_ID + "/default";
-    s1.charset = "UTF-8";
-    s1.setAttribute("crossorigin", "*");
-    document.head.appendChild(s1);
-  })();
-
-})();
+    })();
     document.querySelectorAll("a, button, input, .poster, .lineup-row, label").forEach((el) => {
       el.addEventListener("pointerenter", () => cursor.classList.add("hover"));
       el.addEventListener("pointerleave", () => cursor.classList.remove("hover"));
     });
   }
+
+  /* ---------- Live-Chat (Tawk.to) ---------- */
+  (function injectChat() {
+    const TALK_URL = "https://embed.tawk.to/6a5291b04a08c51d4df0796c/1jt98i705";
+    const s1 = document.createElement("script");
+    s1.async = true;
+    s1.src = TALK_URL;
+    s1.charset = "UTF-8";
+    s1.setAttribute("crossorigin", "*");
+    document.head.appendChild(s1);
+  })();
+
 
   /* ---------- progress / nav auto-hide / back-to-top ---------- */
   const progress = document.getElementById("progress");
