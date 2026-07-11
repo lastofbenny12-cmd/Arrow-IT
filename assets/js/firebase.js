@@ -1,9 +1,9 @@
 /* =========================================================
-   ARROW IT — firebase.js (Auth + Firestore)
-   Email/Password + Phone auth, Sign-Up, Contact storage.
+   ARROW IT — firebase.js (Auth + FormSubmit Email)
+   Email/Password + Phone auth, Sign-Up, Contact Email Delivery.
    ========================================================= */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+import { initializeApp } from "https://gstatic.com";
+import { getAnalytics } from "https://gstatic.com";
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -12,19 +12,16 @@ import {
   signOut,
   onAuthStateChanged,
   RecaptchaVerifier,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+} from "https://gstatic.com";
 import {
   getFirestore,
-  collection,
-  addDoc,
   doc,
   setDoc,
-  serverTimestamp,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+} from "https://gstatic.com";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAT20uUB6t2Wpkh0zvcBVacx9uM_A1f2w8",
-  authDomain: "arrow-it-6b942.firebaseapp.com",
+  authDomain: "://firebaseapp.com",
   projectId: "arrow-it-6b942",
   storageBucket: "arrow-it-6b942.firebasestorage.app",
   messagingSenderId: "783659580320",
@@ -115,20 +112,23 @@ onAuthStateChanged(auth, (user) => {
   const gate = $("gateView");
   const form = $("formView");
 
-  // Only toggle contact gate if this page actually contains the elements.
-  // Otherwise, never hide/show things on login/index pages.
   if (gate && form) {
     if (user) {
       gate.classList.add("hidden");
       form.classList.remove("hidden");
+      
+      const userIdentifier = user.email || user.phoneNumber || "";
       const who = $("contactUser");
-      if (who) who.textContent = user.email || user.phoneNumber || "";
+      if (who) who.textContent = userIdentifier;
+      
+      // Übergibt die Account-Daten an das versteckte Feld im Kontaktformular
+      const hiddenField = $("hiddenUserField");
+      if (hiddenField) hiddenField.value = userIdentifier;
     } else {
       gate.classList.remove("hidden");
       form.classList.add("hidden");
     }
   }
-
 });
 
 /* ---------- consent -> store per user (if signed in) ---------- */
@@ -213,7 +213,7 @@ if (phoneForm) {
   });
 }
 
-/* ---------- CONTACT submit -> Firestore ---------- */
+/* ---------- CONTACT submit -> FormSubmit AJAX ---------- */
 const contactForm = $("contactForm");
 if (contactForm) {
   const cmsg = (t, c) => {
@@ -224,20 +224,36 @@ if (contactForm) {
     e.preventDefault();
     const user = auth.currentUser;
     if (!user) { cmsg("please sign in first ✦"); return; }
+    
     const subject = contactForm.elements.subject.value.trim();
     const message = contactForm.elements.message.value.trim();
     if (!subject || !message) { cmsg("fill in all fields ✦"); return; }
+    
     cmsg("sending…", "var(--teal)");
+    
+    const formData = new FormData(contactForm);
+    
     try {
-      await addDoc(collection(db, "contacts"), {
-        uid: user.uid,
-        email: user.email || user.phoneNumber || "",
-        subject,
-        message,
-        createdAt: serverTimestamp(),
+      // HIER DEINE ECHTE E-MAIL EINTRAGEN (z.B. info@arrowit.info)
+      const response = await fetch("https://formsubmit.co", {
+        method: "POST",
+        body: formData
       });
-      cmsg("message sent — stored on Firebase only 🔒", "var(--teal)");
-      contactForm.reset();
-    } catch (err) { cmsg(mapError(err)); }
+      const data = await response.json();
+      
+      if (data.success === "true" || data.success === true) {
+        cmsg("✓ message sent successfully! ✦", "var(--teal)");
+        contactForm.reset();
+        
+        // Verstecktes Feld nach Reset wieder befüllen
+        const hiddenField = $("hiddenUserField");
+        if (hiddenField) hiddenField.value = user.email || user.phoneNumber || "";
+      } else {
+        cmsg("error sending message ✦", "var(--pink)");
+      }
+    } catch (err) {
+      cmsg("network error ✦ please check connection", "var(--pink)");
+      console.error(err);
+    }
   });
 }
