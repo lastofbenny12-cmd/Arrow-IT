@@ -61,7 +61,7 @@ function showForm(name) {
   setMsg("");
 }
 
-// Initialisiere Klick-Events für Tabs erst, wenn DOM bereit ist
+// Wartet bis das DOM geladen ist, falls Elemente dynamisch sind
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".ptab").forEach((tab) => {
     tab.addEventListener("click", () => showForm(tab.dataset.tab));
@@ -95,16 +95,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* ---------- auth-aware nav + contact gate ---------- */
 onAuthStateChanged(auth, (user) => {
-  const nl = $("navLogin");
-  if (nl) {
-    if (user) {
-      nl.textContent = "LOGOUT";
-      nl.onclick = (e) => { e.preventDefault(); signOut(auth); };
-    } else {
-      nl.textContent = "LOGIN";
-      nl.onclick = null;
+  // Kurze Verzögerung für die dynamische Navigation aus main.js
+  setTimeout(() => {
+    const nl = $("navLogin");
+    if (nl) {
+      if (user) {
+        nl.textContent = "LOGOUT";
+        nl.onclick = (e) => { e.preventDefault(); signOut(auth); };
+      } else {
+        nl.textContent = "LOGIN";
+        nl.onclick = null;
+      }
     }
-  }
+  }, 50);
+
   const gate = $("gateView");
   const form = $("formView");
 
@@ -177,8 +181,8 @@ if (sendCode) {
     setMsg("sending code…", "var(--teal)");
     try {
       confirmationResult = await signInWithPhoneNumber(auth, phone, getVerifier());
-      codeField.classList.remove("hidden");
-      verifyCode.classList.remove("hidden");
+      if (codeField) codeField.classList.remove("hidden");
+      if (verifyCode) verifyCode.classList.remove("hidden");
       setMsg("code sent ✦", "var(--teal)");
     } catch (err) { setMsg(mapError(err), "var(--pink)"); }
   });
@@ -219,7 +223,7 @@ if (contactForm) {
     const formData = new FormData(contactForm);
     
     try {
-      // HIER DEINE ECHTE ARROWIT.INFO EMAIL EINTRAGEN
+      // HIER DEINE ECHTE EMAIL EINTRAGEN (z.B. kontakt@arrowit.info)
       const response = await fetch("https://formsubmit.co", {
         method: "POST",
         body: formData
